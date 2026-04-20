@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import docker
-from docker.errors import DockerException, ImageNotFound
+from docker.errors import DockerException, ImageNotFound, NotFound
 
 log = logging.getLogger("sandbox")
 
@@ -12,6 +12,8 @@ LABEL_APP = "duvo.app"
 LABEL_JOB = "duvo.job"
 LABEL_TYPE = "duvo.type"
 APP_VALUE = "duvo"
+
+SANDBOX_TTL_SECONDS = int(os.getenv("SANDBOX_TTL_SECONDS", "60"))
 
 _SOCKET_CANDIDATES = [
     "/var/run/docker.sock",
@@ -108,6 +110,27 @@ def spawn(job: dict) -> dict:
         "host_port": host_port,
         "url": url,
     }
+
+
+def stop_by_job(job_id: str) -> bool:
+    client = get_docker()
+    try:
+        c = client.containers.get(f"sandbox-{job_id}")
+    except NotFound:
+        return False
+    try:
+        c.remove(force=True)
+        return True
+    except DockerException as e:
+        log.warning("failed to remove sandbox-%s: %s", job_id, e)
+        return False
+
+
+def list_owned():
+    client = get_docker()
+    return client.containers.list(
+        all=True, filters={"label": f"{LABEL_APP}={APP_VALUE}"}
+    )
 
 
 def cleanup_owned() -> int:
