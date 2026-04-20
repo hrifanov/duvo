@@ -1,3 +1,12 @@
+"""Redis client factory + queue primitives.
+
+Queue is a Redis list at `jobs:pending`. Producers LPUSH JSON-encoded jobs,
+consumers BRPOP with a timeout so they block without polling.
+
+Connection config comes from REDIS_HOST / REDIS_PORT env vars (default
+localhost:6379). `decode_responses=True` so callers get `str`, not `bytes`.
+"""
+
 import json
 import os
 

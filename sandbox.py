@@ -1,3 +1,23 @@
+"""Docker sandbox primitives shared by consumer, reaper, and viewer.
+
+Responsibilities:
+    * Resolve a Docker client (probes common socket paths so this works on
+      Docker Desktop / Colima / OrbStack / Rancher without `DOCKER_HOST`).
+    * Hold the sandbox type registry (`SPECS`). Adding a new sandbox type is a
+      single entry: image, command, internal port, scheme.
+    * Spawn/stop/list/cleanup containers by label.
+
+Every container this platform owns carries three labels, which are the source
+of truth for "is this ours":
+    duvo.app  = duvo         (ownership)
+    duvo.job  = <jobId>      (identity)
+    duvo.type = http|browser (kind)
+
+SANDBOX_TTL_SECONDS (env, default 60) is consumed by the consumer when it
+writes the Redis state hash; the reaper reads `expires_at` back and kills
+expired containers.
+"""
+
 import logging
 import os
 from dataclasses import dataclass

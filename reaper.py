@@ -1,3 +1,17 @@
+"""Reconciliation loop — TTL, failure detection, orphan cleanup.
+
+Every RECONCILE_INTERVAL seconds (default 5), walk both sides of the world
+and make them agree:
+
+    Redis says sandbox exists, Docker doesn't  -> delete Redis key
+    Docker says container exists, Redis doesn't -> remove container
+    Container state != running/created/restarting -> DLQ + remove
+    now >= expires_at                           -> stop + remove
+
+Runs as its own process so consumer crashes don't leak sandboxes; a dead
+consumer can't reap its own work.
+"""
+
 import json
 import logging
 import os

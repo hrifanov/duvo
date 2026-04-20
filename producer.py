@@ -1,3 +1,12 @@
+"""Job emitter.
+
+Every INTERVAL_SECONDS, push one job onto `jobs:pending` with a random
+sandbox `type` (http or browser). JobId is an 8-char uuid slice so it fits
+in log lines and container names.
+
+Run standalone: `python producer.py`. Ctrl+C exits cleanly.
+"""
+
 import logging
 import random
 import time

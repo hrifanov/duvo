@@ -1,3 +1,23 @@
+"""FastAPI observability service.
+
+Endpoints:
+    GET  /healthz             Redis + Docker reachable.
+    GET  /sandboxes           List live sandboxes (Docker filtered by label,
+                              enriched from Redis).
+    GET  /sandboxes/{jobId}   One sandbox.
+    DELETE /sandboxes/{jobId} Force release (stop container + drop state).
+    GET  /stats               total, by_type, dead (DLQ depth).
+    GET  /dead?limit=N        Newest N DLQ entries.
+    GET  /                    HTML dashboard, auto-refresh 2s.
+
+Design: Docker is the source of truth for *liveness* (a container either
+exists or it doesn't). Redis supplies *enrichment* (spawn time, TTL, jobId
+metadata). Listing always starts from Docker, then overlays Redis fields, so
+a stale Redis row never invents a phantom sandbox in the UI.
+
+Run: `uvicorn viewer:app --reload --port 8080`.
+"""
+
 import json
 import logging
 

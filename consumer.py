@@ -1,3 +1,16 @@
+"""Job dispatcher.
+
+BRPOP jobs off `jobs:pending`, look the `type` up in `SPECS`, spawn the
+container via `sandbox.spawn`, and write a Redis hash at `sandbox:<jobId>`
+with enrichment fields (url, ports, spawn time, expiry). On failure (unknown
+type or spawn exception) the job goes to the DLQ list `jobs:dead`.
+
+On SIGINT the consumer removes every container it owns and clears every
+`sandbox:*` Redis key so the environment ends clean. Not safe to run more
+than one of these simultaneously — that teardown would nuke a peer's state.
+See README "known gaps".
+"""
+
 import json
 import logging
 from datetime import datetime, timedelta, timezone
